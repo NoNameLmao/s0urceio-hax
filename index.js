@@ -47,7 +47,7 @@ vars = {
 	},
 	hackProgress: 0,
 	hackFailures: 0,
-	// types of miners and their current rank
+	// miners
 	minerStatus: [
 		{ name: "shop-basic-miner", value: 0 },
 		{ name: "shop-advanced-miner", value: 0 },
@@ -99,7 +99,6 @@ app = {
 			app.automate();
 		});
 	},
-
 	restart: () => {
 		app.stop();
 		log(". Waiting for restart...");
@@ -108,7 +107,6 @@ app = {
 			app.automate();
 		}, config.freq.hack);
 	},
-
 	stop: () => {
 		// check and disable all loops
 		for (const loop in vars.loops) {
@@ -125,7 +123,6 @@ app = {
 		vars.flags.progressBlock = false;
 		log("* Stopped all hacking");
 	},
-
 	automate: () => {
 		// does everything to prep for hacking except word guessing
 		app.attack();
@@ -138,10 +135,8 @@ app = {
 			vars.loops.upgrade = setInterval(loops.upgrade, config.freq.upgrade);
 		}
 	},
-
 	attack: () => {
-
-		// if the auto target is toggled, choose the target.
+		// if the auto target is toggled, choose the target
 		if (config.autoTarget) {
 			// with playerToAttack = 0 choose between the 4 first players from the player list
 			const rndTarget = getRandomInt(config.playerToAttack, config.playerToAttack + 3);
@@ -169,7 +164,6 @@ app = {
 			vars.loops.word = setInterval(loops.word, config.freq.word);
 		}
 	},
-
 	findWord: () => {
 		const wordLink = $(".tool-type-img").prop("src");
 		if (!wordLink.endsWith("s0urce.io/client/img/words/template.png")) {
@@ -207,18 +201,15 @@ app = {
 			app.restart();
 		}
 	},
-
 	learn: (word) => {
 		const wordLink = $(".tool-type-img").prop("src");
 		vars.listingURL[wordLink] = word;
 		app.submit(word);
 	},
-
 	submit: (word) => {
 		$("#tool-type-word").val(word);
 		$("#tool-type-word").submit();
 	},
-
 	doOCR: (link, payload) => {
 		vars.flags.ocrBlock = true;
 		// this is made somewhat generic to allow different ocr vendors
@@ -236,7 +227,6 @@ app = {
 		});
 	}
 };
-
 loops = {
 	word: () => {
 		// block is true is we're mid-OCR
@@ -276,7 +266,6 @@ loops = {
 		vars.flags.progressBlock = true;
 		app.findWord();
 	},
-
 	miner: () => {
 		// first, get the status of our miners
 		for (const miner of vars.minerStatus) {
@@ -300,7 +289,6 @@ loops = {
 			}
 		}
 	},
-
 	upgrade: () => {
 		// leave if all firewalls are upgraded to max
 		if (!vars.fireWall[3].needUpgrade)
@@ -319,7 +307,6 @@ loops = {
 			$("#tutorial-firewall").css("display", "none");
 			$("#window-firewall-pagebutton").click();
 		}
-
 		// click on the firewall
 		log(`. Handling upgrades to firewall ${vars.fireWall[i].name}`);
 		$(`#window-firewall-part${index}`).click();
@@ -358,7 +345,6 @@ loops = {
 		}
 	}
 };
-
 gui = {
 	show: () => {
 		const sizeCSS = `height: ${config.gui.height}; width: ${config.gui.width};`;
@@ -471,24 +457,20 @@ gui = {
 		});
 	}
 };
-
 function checkFirewallsUpgrades(FW, index) {
 	if (index === 3)
 		return true;
 	return FW.needUpgrade === false;
 }
-
 function parseHackProgress(progress) {
 	// remove the %;
 	const newProgress = progress.slice(0, -2);
 	const newProgressParts = newProgress.split("width: ");
 	return parseInt(newProgressParts.pop());
 }
-
 function getRandomInt(min, max) {
-	return Math.floor(Math.random() * (max - min + 1)) + min;
+	return Math.floor(Math.random() * (max - min + 1)) + min
 }
-
 function getHashCode(data) {
 	let hash = 0;
 	if (data.length === 0) {
@@ -501,7 +483,6 @@ function getHashCode(data) {
 	}
 	return hash.toString();
 }
-
 function toDataURL(url) {
 	return fetch(url)
 		.then(response => response.blob())
@@ -512,7 +493,6 @@ function toDataURL(url) {
 			reader.readAsDataURL(blob);
 		}));
 }
-
 function log(message) {
 	console.log(`:: ${message}`);
 }
