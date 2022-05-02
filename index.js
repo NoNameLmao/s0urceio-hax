@@ -8,6 +8,7 @@
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=s0urce.io
 // @grant        none
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js
+// @license      MIT
 // ==/UserScript==
 
 /* globals $ */
