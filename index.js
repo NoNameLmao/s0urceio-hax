@@ -1,14 +1,13 @@
 // ==UserScript==
 // @name         s0urceio-hax
 // @namespace    http://tampermonkey.net/
-// @version      0.2-alpha
+// @version      0.3-beta
 // @description  A script that will automate the entirety of s0urce.io for you.
 // @author       emberglaze
 // @match        http://s0urce.io/
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=s0urce.io
 // @grant        none
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js
-// @license      MIT
 // ==/UserScript==
 
 /* globals $ */
@@ -21,7 +20,7 @@
         db: "https://raw.githubusercontent.com/NoNameLmao/s0urceio-hax/main/db.json",
         freq: {
             // how often to guess
-		    word: 705,
+		    word: 720,
             // how often to attempt to upgrade mining tools
 		    mine: 1000,
             // how often to attempt to upgrade firewalls
@@ -29,7 +28,7 @@
             // if not enough bitcoins to hack someone - how long to wait before trying again
 		    broke: 1000,
             // how long to wait before restarting the hacking loop
-		    hack: 1000
+		    hack: 700
         },
         // which player in the index of the list, 0 is the first player (the bot target a player with index between playerToAttack and playerToAttack + 3 (random)
         playerToAttack: 0,
@@ -40,15 +39,13 @@
         maxQBLevel: 100,
         // current BTC * maxUpgradeCost
         maxUpgradeCost: .5,
+        cdnShowProgressPercentage: true,
+        // dont automatically attack these players
+        playersToIgnore: [],
         gui: {
             enabled: true,
             width: "320px",
-            height: "500px"
-        },
-        ocr: {
-            enabled: false,
-            url: "http://api.ocr.space/parse/image",
-            key: "XXX"
+            height: "480px"
         }
     };
     const vars = {
@@ -58,8 +55,6 @@
         listingB64: {},
         balance: 0,
         flags: {
-            // waiting for OCR to complete
-            ocrBlock: false,
             // waiting for the bar to move in response to our word
             progressBlock: false
         },
@@ -138,8 +133,7 @@
                 vars.loops[loop] = null;
             }
             vars.hackProgress = 0;
-            // reset flags
-            vars.flags.ocrBlock = false;
+            // reset flag
             vars.flags.progressBlock = false;
             log("[.] Stopped all hacking");
         },
@@ -163,7 +157,10 @@
                 // playerToAttack is an int, the index of the player list
                 let targetName = $("#player-list").children("tr").eq(rndTarget)[0].innerText;
                 let ownName = $("#window-my-playername")[0].innerHTML;
-                if (targetName.includes(ownName)) app.attack();
+                if (targetName.includes(ownName)) {
+                    log('[.] Ignoring my own username...');
+                    app.attack();
+                }
                 log(`[.] Now attacking ${targetName}...`);
                 // click it, and then hack, and then a random port
                 $("#player-list").children("tr").eq(rndTarget)[0].click();
@@ -200,14 +197,6 @@
                         app.learn(word);
                         return;
                     }
-                    if (config.ocr.enabled) {
-                        log("[*] Not seen, trying OCR...");
-                        app.doOCR(config.ocr.url, {
-                            apikey: config.ocr.key,
-                            language: "eng",
-                            url: wordLink
-                        });
-                    } else log("[*] OCR disabled, skipping...");
                 });
             } else {
                 log("[*] Can't find the word link!");
@@ -227,30 +216,13 @@
             const typeBox = document.getElementById("tool-type-word");
             typeBox.value = word;
             $("#tool-type-form > button").click();
-        },
-        doOCR(link, payload) {
-            vars.flags.ocrBlock = true;
-            // this is made somewhat generic to allow different ocr vendors
-            $.post(link, payload).done((data) => {
-                const word = String(data.ParsedResults[0].ParsedText).trim().toLowerCase().split(" ").join("");
-                if (word.length > 2) {
-                    log(`[.] Got data: [${word}]`);
-                    $("#tool-type-word").val(word);
-                    app.learn(word);
-                    vars.flags.ocrBlock = false;
-                } else {
-                    log("[*] OCR failed!");
-                    app.restart();
-                }
-            });
         }
     }
     const loops = {
         word() {
-            // block is true is we're mid-OCR
-            if (vars.flags.ocrBlock === true) return;
             if ($("#targetmessage-input").is(":visible") === true) {
                 // we're done!
+                setCDMTitle('cdm (idle)');
                 $("#targetmessage-input").val(config.message);
                 $("#targetmessage-button-send").click();
                 app.restart();
@@ -404,11 +376,8 @@
                         ${freqInput("mine")}
                         ${freqInput("upgrade")}
                         ${freqInput("hack")}
-                        <span style="font-size:15px">
-                            Made by snollygolly, updated and improved by emberglaze!
-                        </span>
                         <div id="custom-github-button" class="button" style="display: block;">
-                            Check it out on Github!
+                            Check this out on Github!
                         </div>
                     </div>
                 </div>
@@ -495,7 +464,9 @@
         console.log(`{s0urceio-hax} ${message}`);
     }
     function setCDMTitle(title) {
-        $("#window-tool > div.window-title")[0].textContent = `\n\t\t\t\t\t\t${title} \n\t\t\t\t\t`;
+        const cdmTitle = $("#window-tool > div.window-title")[0]
+        if (!config.cdmShowProgressPercentage) cdmTitle.textContent = `\n\t\t\t\t\t\tcdm \n\t\t\t\t\t`;
+        cdmTitle.textContent = `\n\t\t\t\t\t\t${title} \n\t\t\t\t\t`;
     }
     log("[.] Loaded! Awaiting login...");
     $("#login-page > div.login-window > div:nth-child(4)")[0].outerHTML = ''
@@ -504,11 +475,70 @@
     $("#desktop-wrapper").first().offset({ top: 0, left: 0 });
 	// add a "submit" button as a fix to a bug where the word doesnt get submitted
     $("#tool-type-form")[0].innerHTML += `<button type="submit" class="button">Send</button>`;
-    $("#cdm-target-id").width(145);
+    $("#cdm-target-id").width(140);
+    $("#login-page > div:nth-child(2)")[0].outerHTML = `
+        <div style="position: absolute; width: 100%; bottom: 20px; text-align: center">
+            \n\t\t\t\n\t\t\t\tCopyright 2017 s0urce.io -
+                <a href="client/contact.txt">
+                    Contact, Terms of Service &amp; Credits
+                </a>
+                \n\t\t\t\t
+                <div style="opacity: 0.5">
+                    This website is only a game. Actual hacking is possible, but don't do it.
+                </div>
+                \n\t\t\t
+                <div style="opacity: 0.3; color: #ff2">
+                    s0urceio-hax ~~ Made by <a href="https://github.com/snollygolly/sourceio-automation" style="color: #ff2" target="_blank" rel="noopener noreferrer">snollygolly</a>, improved && updated by <a href="https://github.com/NoNameLmao/s0urceio-hax"style="color: #ff2" target="_blank" rel="noopener noreferrer">emberglaze</a>
+                </div>
+        </div>
+    `;
+    $("#login-page > div.login-window > div:nth-child(2)")[0].outerHTML = `
+        <div style="width: 100%; text-align: center">
+            \n\t\t\t\t\t
+            <img src="https://cdn.discordapp.com/icons/324530421327069185/18e6943b4f3c47d37b0428e858d0d0d4.webp?size=80" style="margin-top: 20px">
+            <span class="txt-rotate"></span>
+            \n\t\t\t\t
+        </div>
+    `
     $("#login-play").on('click', () => {
         log("[!] Starting in 5 seconds to make sure that the entire page loaded, don't panic!");
         setTimeout(app.start, 5000);
     });
+    const TxtRotate = function(el) {
+        this.el = el;
+        this.period = 2000;
+        this.txt = '';
+        this.tick();
+        this.isDeleting = false;
+    };
+    TxtRotate.prototype.tick = function() {
+        const fullTxt = 's0urce.io'
+        if (this.isDeleting) {
+            this.txt = fullTxt.substring(0, this.txt.length - 1);
+        } else {
+            this.txt = fullTxt.substring(0, this.txt.length + 1);
+        }
+        this.el.innerHTML = `<span class="txt-rotate" style="font-size: 60px">${this.txt}</span>`;
+        const that = this;
+        let delta = 250 - Math.random() * 100;
+        if (this.isDeleting) { delta /= 2; }
+        if (!this.isDeleting && this.txt === fullTxt) {
+            delta = this.period;
+            this.isDeleting = true;
+        } else if (this.isDeleting && this.txt === '') {
+            this.isDeleting = false;
+            this.loopNum++;
+            delta = 250;
+        }
+        setTimeout(() => {
+            that.tick();
+        }, delta);
+    };
+    window.onload = function() {
+        const element = $("#login-page > div.login-window > div:nth-child(2) > span")[0];
+        new TxtRotate(element);
+    }
+    $("#window-log > div.window-content > div > div")[0].innerHTML = 'System started. Automation will begin in 5 seconds to make sure the entire page loaded correctly.'
     // access all userscript vars from the window object in console
     window.little_trolling = { config, app, vars, loops, gui }
 })();
