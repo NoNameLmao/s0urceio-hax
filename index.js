@@ -8,6 +8,7 @@
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=s0urce.io
 // @grant        none
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js
+// @license      MIT
 // ==/UserScript==
 
 /* globals $ */
@@ -20,7 +21,7 @@
         db: "https://raw.githubusercontent.com/NoNameLmao/s0urceio-hax/main/db.json",
         freq: {
             // how often to guess
-		    word: 650,
+		    word: 705,
             // how often to attempt to upgrade mining tools
 		    mine: 1000,
             // how often to attempt to upgrade firewalls
@@ -158,26 +159,20 @@
             // if the auto target is toggled, choose the target
             if (config.autoTarget) {
                 // with playerToAttack = 0 choose between the 6 first players from the player list
-                let rndTarget = getRandomInt(config.playerToAttack, config.playerToAttack + 5);
+                let rndTarget = getRandomInt(config.playerToAttack, config.playerToAttack + 10);
                 // playerToAttack is an int, the index of the player list
                 let targetName = $("#player-list").children("tr").eq(rndTarget)[0].innerText;
                 let ownName = $("#window-my-playername")[0].innerHTML;
-                if (targetName.includes(ownName)) {
-                    log('[.] Ignoring my own username...');
-                    app.attack();
-                }
+                if (targetName.includes(ownName)) app.attack();
                 log(`[.] Now attacking ${targetName}...`);
                 // click it, and then hack, and then a random port
                 $("#player-list").children("tr").eq(rndTarget)[0].click();
                 $("#window-other-button").click();
             }
-            // if the auto attack port is toggled, choose the port and click
             if (config.autoAttack) {
                 const portNumber = getRandomInt(1, 3);
-                // do a check for money
                 const portStyle = $(`#window-other-port${portNumber}`).attr("style");
                 if (portStyle.indexOf("opacity: 1") === -1) {
-                    // this port costs too much, let's wait a bit
                     log(`[*] Hacking port ${portNumber} is too expensive, waiting...`);
                     setTimeout(app.attack, config.freq.broke);
                     return;
@@ -251,7 +246,7 @@
         }
     }
     const loops = {
-        word: () => {
+        word() {
             // block is true is we're mid-OCR
             if (vars.flags.ocrBlock === true) return;
             if ($("#targetmessage-input").is(":visible") === true) {
@@ -280,13 +275,14 @@
                 // the bar has moved
                 vars.hackFailures = 0;
                 vars.hackProgress = newHackProgress;
+                setCDMTitle(`cdm (${$("#progressbar-firewall-amount").prop("style").width} progress)`);
                 vars.flags.progressBlock = false;
             }
             // actually do the word stuff
             vars.flags.progressBlock = true;
             app.findWord();
         },
-        miner: () => {
+        miner() {
             // first, get the status of our miners
             for (const miner of vars.minerStatus) {
                 // set value
@@ -309,7 +305,7 @@
                 }
             }
         },
-        upgrade: () => {
+        upgrade() {
             // leave if all firewalls are upgraded to max
             if (!vars.firewall[3].needUpgrade) return;
             // get a random firewall
@@ -422,15 +418,9 @@
             $("#custom-autoTarget-button").css("color", config.autoTarget ? "green" : "red");
             $("#custom-autoAttack-button").css("color", config.autoAttack ? "green" : "red");
             // bind functions to the gui buttons
-            $("#custom-gui-bot-title > span.window-close-style").on("click", () => {
-                $("#custom-gui").hide();
-            });
-            $("#custom-restart-button").on("click", () => {
-                app.restart();
-            });
-            $("#custom-stop-button").on("click", () => {
-                app.stop();
-            });
+            $("#custom-gui-bot-title > span.window-close-style").on("click", () => $("#custom-gui").hide());
+            $("#custom-restart-button").on("click", () => app.restart());
+            $("#custom-stop-button").on("click", () => app.stop());
             $("#custom-autoTarget-button").on("click", () => {
                 config.autoTarget = !config.autoTarget;
                 $("#custom-autoTarget-button").css("color", config.autoTarget ? "green" : "red");
@@ -439,18 +429,11 @@
 		    	config.autoAttack = !config.autoAttack;
 	    		$("#custom-autoAttack-button").css("color", config.autoAttack ? "green" : "red");
 	    	});
-            $("#custom-github-button").on("click", () => {
-		    	window.open("https://github.com/NoNameLmao/s0urceio-hax");
-	    	});
+            $("#custom-github-button").on("click", () => window.open("https://github.com/NoNameLmao/s0urceio-hax"));
             $(".custom-gui-freq").on("keypress", e => {
-	    		if (e.keyCode !== 13) {
-	    			return;
-	    		}
+	    		if (e.keyCode !== 13) return;
 	    		const type = $(e.target).attr("data-type");
-	    		if (!config.freq[type]) {
-	    			// disregard invalid input
-	    			return;
-	    		}
+	    		if (!config.freq[type]) return;
 		    	config.freq[type] = $(e.target).val();
 	    		log(`[*] Frequency for '${type}' set to ${config.freq[type]}`);
 	    	});
@@ -458,21 +441,21 @@
                 if (e.keyCode !== 13) return;
                 config.message = $(e.target).val();
                 log(`[*] Message for set to: ${config.message}`);
+                setCDMTitle('cdm (idle)');
             });
             // make the bot window draggable
-            const botWindow = "#custom-gui";
-            $(document).on("mousedown", botWindow, e => {
+            $(document).on("mousedown", "#custom-gui", e => {
                 vars.gui.dragReady = true;
-                vars.gui.dragOffset.x = e.pageX - $(botWindow).position().left;
-                vars.gui.dragOffset.y = e.pageY - $(botWindow).position().top;
+                vars.gui.dragOffset.x = e.pageX - $("#custom-gui").position().left;
+                vars.gui.dragOffset.y = e.pageY - $("#custom-gui").position().top;
             });
-            $(document).on("mouseup", botWindow, () => {
+            $(document).on("mouseup", "#custom-gui", () => {
                 vars.gui.dragReady = false;
             });
-            $(document).on("mousemove", (e) => {
+            $(document).on("mousemove", e => {
                 if (vars.gui.dragReady) {
-                    $(botWindow).css("top", `${e.pageY - vars.gui.dragOffset.y}px`);
-                    $(botWindow).css("left", `${e.pageX - vars.gui.dragOffset.x}px`);
+                    $("#custom-gui").css("top", `${e.pageY - vars.gui.dragOffset.y}px`);
+                    $("#custom-gui").css("left", `${e.pageX - vars.gui.dragOffset.x}px`);
                 }
             });
         }
@@ -511,6 +494,9 @@
     function log(message) {
         console.log(`{s0urceio-hax} ${message}`);
     }
+    function setCDMTitle(title) {
+        $("#window-tool > div.window-title")[0].textContent = `\n\t\t\t\t\t\t${title} \n\t\t\t\t\t`;
+    }
     log("[.] Loaded! Awaiting login...");
     $("#login-page > div.login-window > div:nth-child(4)")[0].outerHTML = ''
     $("#login-page > div.login-window > div:nth-child(6)")[0].outerHTML = ''
@@ -518,6 +504,7 @@
     $("#desktop-wrapper").first().offset({ top: 0, left: 0 });
 	// add a "submit" button as a fix to a bug where the word doesnt get submitted
     $("#tool-type-form")[0].innerHTML += `<button type="submit" class="button">Send</button>`;
+    $("#cdm-target-id").width(145);
     $("#login-play").on('click', () => {
         log("[!] Starting in 5 seconds to make sure that the entire page loaded, don't panic!");
         setTimeout(app.start, 5000);
