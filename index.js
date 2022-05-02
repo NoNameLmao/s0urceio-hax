@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         s0urceio-hax
 // @namespace    http://tampermonkey.net/
-// @version      0.0.1-alpha
+// @version      0.1-alpha
 // @description  A script that will automate the entirety of s0urce.io for you.
-// @author       You
+// @author       emberglaze
 // @match        http://s0urce.io/
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=s0urce.io
 // @grant        none
@@ -153,8 +153,9 @@
                 // playerToAttack is an int, the index of the player list
                 let targetName = $("#player-list").children("tr").eq(rndTarget)[0].innerText;
                 let ownName = $("#window-my-playername")[0].innerHTML;
-                if (targetName === ownName) {
+                if (targetName.includes(ownName)) {
                     log('[.] Ignoring my own username, attacking someone else...');
+                    app.attack();
                 }
                 log(`[.] Now attacking ${targetName}...`);
                 // click it, and then hack, and then a random port
