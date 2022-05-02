@@ -1,15 +1,16 @@
 // ==UserScript==
 // @name         s0urceio-hax
 // @namespace    http://tampermonkey.net/
-// @version      0.1-alpha
+// @version      0.2-alpha
 // @description  A script that will automate the entirety of s0urce.io for you.
 // @author       emberglaze
 // @match        http://s0urce.io/
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=s0urce.io
 // @grant        none
+// @require      http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js
 // ==/UserScript==
 
-/* globals jQuery, $, waitForKeyElements */
+/* globals $ */
 (function() {
     'use strict';
     const config = {
@@ -19,7 +20,7 @@
         db: "https://raw.githubusercontent.com/NoNameLmao/s0urceio-hax/main/db.json",
         freq: {
             // how often to guess
-		    word: 700,
+		    word: 650,
             // how often to attempt to upgrade mining tools
 		    mine: 1000,
             // how often to attempt to upgrade firewalls
@@ -34,14 +35,14 @@
         // max failed hack attempts before restarting
         maxHackFails: 5,
         // how high to upgrade all of your miner types except quantum-servers and botnets.
-        maxMinerLevel: 500,
-        maxQBLevel: 10000,
+        maxMinerLevel: 20,
+        maxQBLevel: 100,
         // current BTC * maxUpgradeCost
-        maxUpgradeCost: .9,
+        maxUpgradeCost: .5,
         gui: {
             enabled: true,
             width: "320px",
-            height: "412px"
+            height: "500px"
         },
         ocr: {
             enabled: false,
@@ -89,7 +90,7 @@
         }
     };
     const app = {
-        start: () => {
+        start() {
             $.get(config.db).done((data) => {
                 vars.listingB64 = JSON.parse(data);
                 // check the windows are open, and open them if they aren't
@@ -117,7 +118,7 @@
                 app.automate();
             });
         },
-        restart: () => {
+        restart() {
             app.stop();
             log("[.] Waiting for restart...");
             setTimeout(() => {
@@ -125,7 +126,7 @@
                 app.automate();
             }, config.freq.hack);
         },
-        stop: () => {
+        stop() {
             // check and disable all loops
             for (const loop in vars.loops) {
                 if (vars.loops[loop] === null) {
@@ -141,7 +142,7 @@
             vars.flags.progressBlock = false;
             log("[.] Stopped all hacking");
         },
-        automate: () => {
+        automate() {
             // does everything to prep for hacking except word guessing
             app.attack();
             if (vars.loops.miner === null) {
@@ -153,16 +154,16 @@
                 vars.loops.upgrade = setInterval(loops.upgrade, config.freq.upgrade);
             }
         },
-        attack: () => {
+        attack() {
             // if the auto target is toggled, choose the target
             if (config.autoTarget) {
-                // with playerToAttack = 0 choose between the 4 first players from the player list
-                let rndTarget = getRandomInt(config.playerToAttack, config.playerToAttack + 3);
+                // with playerToAttack = 0 choose between the 6 first players from the player list
+                let rndTarget = getRandomInt(config.playerToAttack, config.playerToAttack + 5);
                 // playerToAttack is an int, the index of the player list
                 let targetName = $("#player-list").children("tr").eq(rndTarget)[0].innerText;
                 let ownName = $("#window-my-playername")[0].innerHTML;
                 if (targetName.includes(ownName)) {
-                    log('[.] Ignoring my own username, attacking someone else...');
+                    log('[.] Ignoring my own username...');
                     app.attack();
                 }
                 log(`[.] Now attacking ${targetName}...`);
@@ -177,7 +178,7 @@
                 const portStyle = $(`#window-other-port${portNumber}`).attr("style");
                 if (portStyle.indexOf("opacity: 1") === -1) {
                     // this port costs too much, let's wait a bit
-                    log(`* Hacking port ${portNumber} is too expensive, waiting...`);
+                    log(`[*] Hacking port ${portNumber} is too expensive, waiting...`);
                     setTimeout(app.attack, config.freq.broke);
                     return;
                 }
@@ -187,10 +188,10 @@
                 vars.loops.word = setInterval(loops.word, config.freq.word);
             }
         },
-        findWord: () => {
+        findWord() {
             const wordLink = $(".tool-type-img").prop("src");
             if (!wordLink.endsWith("s0urce.io/client/img/words/template.png")) {
-                if (vars.listingURL.hasOwnProperty(wordLink) === true) {
+                if (vars.listingURL.hasOwnProperty(wordLink)) {
                     const word = vars.listingURL[wordLink];
                     log(`[.] Found word (URL): [${word}]`);
                     app.submit(word);
@@ -198,22 +199,20 @@
                 }
                 toDataURL(wordLink).then((dataUrl) => {
                     const hash = getHashCode(dataUrl);
-                    if (vars.listingB64.hasOwnProperty(hash) === true) {
+                    if (vars.listingB64.hasOwnProperty(hash)) {
                         const word = vars.listingB64[hash];
                         log(`[.] Found word (B64): [${word}]`);
                         app.learn(word);
                         return;
                     }
-                    if (config.ocr.enabled === true) {
+                    if (config.ocr.enabled) {
                         log("[*] Not seen, trying OCR...");
                         app.doOCR(config.ocr.url, {
                             apikey: config.ocr.key,
                             language: "eng",
                             url: wordLink
                         });
-                    } else {
-                        log("[*] OCR disabled, skipping...");
-                    }
+                    } else log("[*] OCR disabled, skipping...");
                 });
             } else {
                 log("[*] Can't find the word link!");
@@ -224,16 +223,17 @@
                 app.restart();
             }
         },
-        learn: (word) => {
+        learn(word) {
             const wordLink = $(".tool-type-img").prop("src");
             vars.listingURL[wordLink] = word;
             app.submit(word);
         },
-        submit: (word) => {
-            $("#tool-type-word").val(word);
-            $("#tool-type-word").submit();
+        submit(word) {
+            const typeBox = document.getElementById("tool-type-word");
+            typeBox.value = word;
+            $("#tool-type-form > button").click();
         },
-        doOCR: (link, payload) => {
+        doOCR(link, payload) {
             vars.flags.ocrBlock = true;
             // this is made somewhat generic to allow different ocr vendors
             $.post(link, payload).done((data) => {
@@ -267,9 +267,9 @@
                 // check to see if it moved
                 if (vars.hackProgress === newHackProgress) {
                     log("[*] Progress bar hasn't moved, waiting...");
-                    vars.hackFails++;
-                    if (vars.hackFails >= config.maxHackFails) {
-                        vars.hackFails = 0;
+                    vars.hackFailures++;
+                    if (vars.hackFailures >= config.maxHackFails) {
+                        vars.hackFailures = 0;
                         log("[*] Progress bar is stuck, restarting...");
                         // maybe the URLs have changed
                         vars.listingURL = {};
@@ -278,7 +278,7 @@
                     return;
                 }
                 // the bar has moved
-                vars.hackFails = 0;
+                vars.hackFailures = 0;
                 vars.hackProgress = newHackProgress;
                 vars.flags.progressBlock = false;
             }
@@ -408,8 +408,11 @@
                         ${freqInput("mine")}
                         ${freqInput("upgrade")}
                         ${freqInput("hack")}
+                        <span style="font-size:15px">
+                            Made by snollygolly, updated and improved by emberglaze!
+                        </span>
                         <div id="custom-github-button" class="button" style="display: block;">
-                            This script is on Github!
+                            Check it out on Github!
                         </div>
                     </div>
                 </div>
@@ -418,7 +421,7 @@
             // color the toggle buttons
             $("#custom-autoTarget-button").css("color", config.autoTarget ? "green" : "red");
             $("#custom-autoAttack-button").css("color", config.autoAttack ? "green" : "red");
-            // bind functions to the gui's buttons
+            // bind functions to the gui buttons
             $("#custom-gui-bot-title > span.window-close-style").on("click", () => {
                 $("#custom-gui").hide();
             });
@@ -437,28 +440,28 @@
 	    		$("#custom-autoAttack-button").css("color", config.autoAttack ? "green" : "red");
 	    	});
             $("#custom-github-button").on("click", () => {
-		    	window.open("https://github.com/snollygolly/sourceio-automation");
+		    	window.open("https://github.com/NoNameLmao/s0urceio-hax");
 	    	});
-            $(".custom-gui-freq").on("keypress", (e) => {
+            $(".custom-gui-freq").on("keypress", e => {
 	    		if (e.keyCode !== 13) {
 	    			return;
 	    		}
 	    		const type = $(e.target).attr("data-type");
 	    		if (!config.freq[type]) {
-	    			// invalid input, disregard i guess?
+	    			// disregard invalid input
 	    			return;
 	    		}
 		    	config.freq[type] = $(e.target).val();
 	    		log(`[*] Frequency for '${type}' set to ${config.freq[type]}`);
 	    	});
-            $(".custom-gui-msg").on("keypress", (e) => {
+            $(".custom-gui-msg").on("keypress", e => {
                 if (e.keyCode !== 13) return;
                 config.message = $(e.target).val();
                 log(`[*] Message for set to: ${config.message}`);
             });
             // make the bot window draggable
-            const botWindow = ("#custom-gui");
-            $(document).on("mousedown", botWindow, (e) => {
+            const botWindow = "#custom-gui";
+            $(document).on("mousedown", botWindow, e => {
                 vars.gui.dragReady = true;
                 vars.gui.dragOffset.x = e.pageX - $(botWindow).position().left;
                 vars.gui.dragOffset.y = e.pageY - $(botWindow).position().top;
@@ -509,10 +512,16 @@
         console.log(`{s0urceio-hax} ${message}`);
     }
     log("[.] Loaded! Awaiting login...");
-    // auto start the automation 5 seconds after login
+    $("#login-page > div.login-window > div:nth-child(4)")[0].outerHTML = ''
+    $("#login-page > div.login-window > div:nth-child(6)")[0].outerHTML = ''
+    $("#window-msg2")[0].outerHTML = ''
+    $("#desktop-wrapper").first().offset({ top: 0, left: 0 });
+	// add a "submit" button as a fix to a bug where the word doesnt get submitted
+    $("#tool-type-form")[0].innerHTML += `<button type="submit" class="button">Send</button>`;
     $("#login-play").on('click', () => {
         log("[!] Starting in 5 seconds to make sure that the entire page loaded, don't panic!");
         setTimeout(app.start, 5000);
     });
-    window.hax = { config, app, vars, loops, gui }
+    // access all userscript vars from the window object in console
+    window.little_trolling = { config, app, vars, loops, gui }
 })();
