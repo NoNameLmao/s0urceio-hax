@@ -16,19 +16,28 @@
         message: "javascript on top",
 	    autoTarget: true,
 	    autoAttack: true,
-        db: "https://raw.githubusercontent.com/snollygolly/sourceio-automation/master/db.json",
+        db: "https://raw.githubusercontent.com/NoNameLmao/s0urceio-hax/main/db.json",
         freq: {
+            // how often to guess
 		    word: 700,
+            // how often to attempt to upgrade mining tools
 		    mine: 1000,
+            // how often to attempt to upgrade firewalls
 		    upgrade: 1000,
+            // if not enough bitcoins to hack someone - how long to wait before trying again
 		    broke: 1000,
+            // how long to wait before restarting the hacking loop
 		    hack: 1000
         },
+        // which player in the index of the list, 0 is the first player (the bot target a player with index between playerToAttack and playerToAttack + 3 (random)
         playerToAttack: 0,
+        // max failed hack attempts before restarting
         maxHackFails: 5,
-        maxMinerLevel: 20,
-        maxQBLevel: 50,
-        maxUpgradeCost: .5,
+        // how high to upgrade all of your miner types except quantum-servers and botnets.
+        maxMinerLevel: 500,
+        maxQBLevel: 10000,
+        // current BTC * maxUpgradeCost
+        maxUpgradeCost: .9,
         gui: {
             enabled: true,
             width: "320px",
@@ -45,7 +54,6 @@
         listingURL: {},
         // b64 hashes to words (loaded on start)
         listingB64: {},
-        // how much BT you have
         balance: 0,
         flags: {
             // waiting for OCR to complete
