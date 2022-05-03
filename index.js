@@ -15,19 +15,19 @@
 (function() {
     'use strict';
     const config = {
-        message: "javascript on top",
-	    autoTarget: true,
-	    autoAttack: true,
+        message: "https://github.com/NoNameLmao/s0urceio-hax/",
+	    autoTarget: false,
+	    autoAttack: false,
         db: "https://raw.githubusercontent.com/NoNameLmao/s0urceio-hax/main/db.json",
         freq: {
             // how often to guess
 		    word: 720,
             // how often to attempt to upgrade mining tools
-		    mine: 1000,
+		    mine: 800,
             // how often to attempt to upgrade firewalls
-		    upgrade: 1000,
+		    upgrade: 800,
             // if not enough bitcoins to hack someone - how long to wait before trying again
-		    broke: 1000,
+		    broke: 800,
             // how long to wait before restarting the hacking loop
 		    hack: 700
         },
@@ -43,6 +43,7 @@
         cdnShowProgressPercentage: true,
         // dont automatically attack these players
         playersToIgnore: [],
+        infoInPageTitle: true,
         gui: {
             enabled: true,
             width: "320px",
@@ -157,7 +158,7 @@
                 let rndTarget = getRandomInt(config.playerToAttack, config.playerToAttack + 10);
                 // playerToAttack is an int, the index of the player list
                 let targetName = $("#player-list").children("tr").eq(rndTarget)[0].innerText;
-                let ownName = $("#window-my-playername")[0].innerHTML;
+                let ownName = $("#window-my-playername")[0].textContent.replace((/  |\r\n|\n|\r/gm), "");
                 if (targetName.includes(ownName)) {
                     log('[.] Ignoring my own username...');
                     app.attack();
@@ -351,7 +352,7 @@
             const botWindowHTML = `
                 <div id="custom-gui" class="window" style="border-color: rgb(62, 76, 95); color: rgb(191, 207, 210); ${sizeCSS} z-index: 10; top: 11.5%; left: 83%;">
                     <div id="custom-gui-bot-title" class="window-title" style="background-color: rgb(62, 76, 95);">
-                        Source.io Bot
+                        s0urceio-hax GUI
                         <span class="window-close-style">
                             <img class="window-close-img" src="http://s0urce.io/client/img/icon-close.png">
                         </span>
@@ -364,10 +365,10 @@
                             Stop Bot
                         </div>
                         <div id="custom-autoTarget-button" class="button" style="display: block; margin-bottom: 15px">
-                            Target Auto
+                            Auto pick targets
                         </div>
                         <div id="custom-autoAttack-button" class="button" style="display: block; margin-bottom: 15px">
-                            Port Attack Auto
+                            Auto hack ports
                         </div>
                         <span>Message to victim:</span>
                         <br>
@@ -539,7 +540,17 @@
         const element = $("#login-page > div.login-window > div:nth-child(2) > span")[0];
         new TxtRotate(element);
     }
-    $("#window-log > div.window-content > div > div")[0].innerHTML = 'System started. Automation will begin in 5 seconds to make sure the entire page loaded correctly.'
+    $("#window-log > div.window-content > div > div")[0].innerHTML = 'System started. s0urceio-hax\'s GUI will show in 5 seconds to make sure the page finished loading.';
+    function changePageTitle(title) {
+        $("title")[0].textContent = title;
+    }
+    let playerLevel;
+    let currentPageTitleIndex = 0;
+    const pageTitleInfoArray = ['']
+    setInterval(() => {
+
+        playerLevel = $("#window-my-playerlevel")[0].textContent;
+    }, 5000);
     // access all userscript vars from the window object in console
     window.little_trolling = { config, app, vars, loops, gui }
 })();
