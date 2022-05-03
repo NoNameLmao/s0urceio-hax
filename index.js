@@ -1,21 +1,19 @@
 // ==UserScript==
 // @name         s0urceio-hax
 // @namespace    http://tampermonkey.net/
-// @version      0.3-beta
+// @version      0.4-beta
 // @description  A script that will automate the entirety of s0urce.io for you.
 // @author       emberglaze
 // @match        http://s0urce.io/
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=s0urce.io
 // @grant        none
-// @require      http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js
 // @license      MIT
 // ==/UserScript==
 
 /* globals $ */
-(function() {
-    'use strict';
+(() => {
     const config = {
-        message: "https://github.com/NoNameLmao/s0urceio-hax/",
+        message: "https://bit.ly/3vCHQKU",
 	    autoTarget: false,
 	    autoAttack: false,
         db: "https://raw.githubusercontent.com/NoNameLmao/s0urceio-hax/main/db.json",
@@ -25,11 +23,11 @@
             // how often to attempt to upgrade mining tools
 		    mine: 800,
             // how often to attempt to upgrade firewalls
-		    upgrade: 800,
+		    upgrade: 500,
             // if not enough bitcoins to hack someone - how long to wait before trying again
 		    broke: 800,
             // how long to wait before restarting the hacking loop
-		    hack: 700
+		    hack: 500
         },
         // which player in the index of the list, 0 is the first player (the bot target a player with index between playerToAttack and playerToAttack + 3 (random)
         playerToAttack: 0,
@@ -56,10 +54,8 @@
         // b64 hashes to words (loaded on start)
         listingB64: {},
         balance: 0,
-        flags: {
-            // waiting for the bar to move in response to our word
-            progressBlock: false
-        },
+        // waiting for the bar to move in response to our word
+        progressBlock: false,
         loops: {
             word: null,
             upgrade: null,
@@ -89,7 +85,7 @@
     };
     const app = {
         start() {
-            $.get(config.db).done((data) => {
+            $.get(config.db).done(data => {
                 vars.listingB64 = JSON.parse(data);
                 // check the windows are open, and open them if they aren't
                 if ($("#player-list").is(":visible") === false) {
@@ -109,10 +105,7 @@
                     log("[.] Opening bot window...");
                     if ($("#custom-gui").length > 0) $("#custom-gui").show();
                     else gui.show();
-                } else {
-                    log("[.] GUI disabled, skipping...");
-                }
-                // start the automation
+                } else log("[.] GUI disabled, skipping...");
                 app.automate();
             });
         },
@@ -125,7 +118,6 @@
             }, config.freq.hack);
         },
         stop() {
-            // check and disable all loops
             for (const loop in vars.loops) {
                 if (vars.loops[loop] === null) {
                     log(`[!] Can't stop "${loop}" loop!`);
@@ -135,21 +127,14 @@
                 vars.loops[loop] = null;
             }
             vars.hackProgress = 0;
-            // reset flag
-            vars.flags.progressBlock = false;
+            vars.progressBlock = false;
             log("[.] Stopped all hacking");
         },
         automate() {
             // does everything to prep for hacking except word guessing
             app.attack();
-            if (vars.loops.miner === null) {
-                // start the loop for btc monitoring
-                vars.loops.miner = setInterval(loops.miner, config.freq.mine);
-            }
-            if (vars.loops.upgrade === null) {
-                // start the loop for upgrades
-                vars.loops.upgrade = setInterval(loops.upgrade, config.freq.upgrade);
-            }
+            if (vars.loops.miner === null) vars.loops.miner = setInterval(loops.miner, config.freq.mine);
+            if (vars.loops.upgrade === null) vars.loops.upgrade = setInterval(loops.upgrade, config.freq.upgrade);
         },
         attack() {
             // if the auto target is toggled, choose the target
@@ -157,7 +142,7 @@
                 // with playerToAttack = 0 choose between the 6 first players from the player list
                 let rndTarget = getRandomInt(config.playerToAttack, config.playerToAttack + 10);
                 // playerToAttack is an int, the index of the player list
-                let targetName = $("#player-list").children("tr").eq(rndTarget)[0].innerText;
+                let targetName = $("#player-list").children("tr").eq(rndTarget)[0].innerText.replace(/^.../gm, "");
                 let ownName = $("#window-my-playername")[0].textContent.replace((/  |\r\n|\n|\r/gm), "");
                 if (targetName.includes(ownName)) {
                     log('[.] Ignoring my own username...');
@@ -178,9 +163,7 @@
                 }
                 $(`#window-other-port${portNumber}`).click();
             }
-            if (vars.loops.word === null) {
-                vars.loops.word = setInterval(loops.word, config.freq.word);
-            }
+            if (vars.loops.word === null) vars.loops.word = setInterval(loops.word, config.freq.word);
         },
         findWord() {
             const wordLink = $(".tool-type-img").prop("src");
@@ -203,9 +186,7 @@
             } else {
                 log("[*] Can't find the word link!");
                 // if the target is disconnected and autoTarget disabled, re-enable it.
-                if ($("#cdm-text-container span:last").text() === "Target is disconnected from the Server." && !config.autoTarget) {
-                    $("#custom-autoTarget-button").click();
-                }
+                if ($("#cdm-text-container span:last").text() === "Target is disconnected from the Server." && !config.autoTarget) $("#custom-autoTarget-button").click();
                 app.restart();
             }
         },
@@ -231,7 +212,7 @@
                 return;
             }
             // if we're waiting on the progress bar to move
-            if (vars.flags.progressBlock === true) {
+            if (vars.progressBlock === true) {
                 const newHackProgress = parseHackProgress($("#progressbar-firewall-amount").attr("style"));
                 // check to see if it moved
                 if (vars.hackProgress === newHackProgress) {
@@ -250,31 +231,19 @@
                 vars.hackFailures = 0;
                 vars.hackProgress = newHackProgress;
                 setCDMTitle(`cdm (${$("#progressbar-firewall-amount").prop("style").width} progress)`);
-                vars.flags.progressBlock = false;
+                vars.progressBlock = false;
             }
             // actually do the word stuff
-            vars.flags.progressBlock = true;
+            vars.progressBlock = true;
             app.findWord();
         },
         miner() {
-            // first, get the status of our miners
             for (const miner of vars.minerStatus) {
-                // set value
                 miner.value = parseInt($(`#${miner.name}-amount`).text());
-                // this is available to buy
                 if ($(`#${miner.name}`).attr("style") === "opacity: 1;") {
-                    // buy more quantum servers and botnets, buy botnets at the same rate as the quantum servers
-                    if (miner.value >= config.maxQBLevel) {
-                        // we're beyond or at the max QB level, no updates needed
-                        continue;
-                    }
-                    // is this an advanced miner?
+                    if (miner.value >= config.maxQBLevel) continue;
                     const isAdvancedMiner = (miner.name === "shop-quantum-server" || miner.name === "shop-bot-net") ? true : false;
-                    if (miner.value >= config.maxMinerLevel && !isAdvancedMiner) {
-                        // this isn't an advanced miner and it's beyond the max level, no updates needed
-                        continue;
-                    }
-                    // we should buy this
+                    if (miner.value >= config.maxMinerLevel && !isAdvancedMiner) continue;
                     $(`#${miner.name}`).click();
                 }
             }
@@ -332,7 +301,7 @@
         }
     }
     const gui = {
-        show: () => {
+        show() {
             const sizeCSS = `height: ${config.gui.height}; width: ${config.gui.width};`;
             const labelMap = {
                 word: "Word Speed",
@@ -385,10 +354,9 @@
                 </div>
             `
             $(".window-wrapper").append(botWindowHTML);
-            // color the toggle buttons
             $("#custom-autoTarget-button").css("color", config.autoTarget ? "green" : "red");
             $("#custom-autoAttack-button").css("color", config.autoAttack ? "green" : "red");
-            // bind functions to the gui buttons
+            // bind functions to the gui button
             $("#custom-gui-bot-title > span.window-close-style").on("click", () => $("#custom-gui").hide());
             $("#custom-restart-button").on("click", () => app.restart());
             $("#custom-stop-button").on("click", () => app.stop());
@@ -436,7 +404,6 @@
         return !FW.needUpgrade;
     }
     function parseHackProgress(progress) {
-        // remove the %;
         const newProgress = progress.slice(0, -2);
         const newProgressParts = newProgress.split("width: ");
         return parseInt(newProgressParts.pop());
@@ -466,14 +433,14 @@
         console.log(`{s0urceio-hax} ${message}`);
     }
     function setCDMTitle(title) {
-        const cdmTitle = $("#window-tool > div.window-title")[0]
+        const cdmTitle = $("#window-tool > div.window-title")[0];
         if (!config.cdmShowProgressPercentage) cdmTitle.textContent = `\n\t\t\t\t\t\tcdm \n\t\t\t\t\t`;
         cdmTitle.textContent = `\n\t\t\t\t\t\t${title} \n\t\t\t\t\t`;
     }
     log("[.] Loaded! Awaiting login...");
-    $("#login-page > div.login-window > div:nth-child(4)")[0].outerHTML = ''
-    $("#login-page > div.login-window > div:nth-child(6)")[0].outerHTML = ''
-    $("#window-msg2")[0].outerHTML = ''
+    $("#login-page > div.login-window > div:nth-child(4)")[0].outerHTML = '';
+    $("#login-page > div.login-window > div:nth-child(6)")[0].outerHTML = '';
+    $("#window-msg2")[0].outerHTML = '';
     $("#desktop-wrapper").first().offset({ top: 0, left: 0 });
 	// add a "submit" button as a fix to a bug where the word doesnt get submitted
     $("#tool-type-form")[0].innerHTML += `<button type="submit" class="button">Send</button>`;
@@ -515,11 +482,8 @@
     };
     TxtRotate.prototype.tick = function() {
         const fullTxt = 's0urce.io'
-        if (this.isDeleting) {
-            this.txt = fullTxt.substring(0, this.txt.length - 1);
-        } else {
-            this.txt = fullTxt.substring(0, this.txt.length + 1);
-        }
+        if (this.isDeleting) this.txt = fullTxt.substring(0, this.txt.length - 1);
+        else this.txt = fullTxt.substring(0, this.txt.length + 1);
         this.el.innerHTML = `<span class="txt-rotate" style="font-size: 60px">${this.txt}</span>`;
         const that = this;
         let delta = 250 - Math.random() * 100;
@@ -536,19 +500,18 @@
             that.tick();
         }, delta);
     };
-    window.onload = function() {
-        const element = $("#login-page > div.login-window > div:nth-child(2) > span")[0];
-        new TxtRotate(element);
-    }
+    window.onload = () => new TxtRotate($("#login-page > div.login-window > div:nth-child(2) > span")[0]);
     $("#window-log > div.window-content > div > div")[0].innerHTML = 'System started. s0urceio-hax\'s GUI will show in 5 seconds to make sure the page finished loading.';
     function changePageTitle(title) {
         $("title")[0].textContent = title;
+    }
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms))
     }
     let playerLevel;
     let currentPageTitleIndex = 0;
     const pageTitleInfoArray = ['']
     setInterval(() => {
-
         playerLevel = $("#window-my-playerlevel")[0].textContent;
     }, 5000);
     // access all userscript vars from the window object in console
