@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         s0urceio-hax
 // @namespace    http://tampermonkey.net/
-// @version      0.10.0-45
+// @version      0.10.1-49
 // @description  A script that will automate almost all of s0urce.io for you.
 // @author       emberglaze
 // @match        http://s0urce.io/
@@ -35,8 +35,8 @@
         enableLogging: true,             // Output logs in Devtools console (recommended to be "false" unless debugging, causes huge lag over time)
         gui: {
             enabled: true,  // if you want the bot's own custom window or not (you can always close it in game and reopen it by typing "" in f12 console)
-            width: "320px", // window's width  in pixels
-            height: "480px" // window's height in pixels
+            width: "320px", // window width  in pixels
+            height: "480px" // window height in pixels
         }
     };
     const vars = {
@@ -274,7 +274,6 @@
                 $("#window-firewall-pagebutton").click();
             }
             // click on the firewall
-            logger.action(`Handling upgrades to firewall ${vars.firewall[i].name}...`);
             $(`#window-firewall-part${index}`).click();
             // get stats
             const stats = [
@@ -449,7 +448,7 @@
     $("#window-firewall-part1-amount").click();
     $("#login-page > div:nth-child(2)")[0].outerHTML = (
         '<div style="position: absolute; width: 100%; bottom: 20px; text-align: center">'+
-            '\n\t\t\t\n\t\t\t\tCopyright 2017 s0urce.io -'+
+            '\n\t\t\t\n\t\t\t\tCopyright 2017 s0urce.io - '+
                 '<a href="client/contact.txt">'+
                     'Contact, Terms of Service &amp; Credits'+
                 '</a>'+
@@ -459,7 +458,7 @@
                 '</div>'+
                 '\n\t\t\t'+
                 '<div style="opacity: 0.3; color: #ff2">'+ // version
-                    's0urceio-hax v0.10.0-45 ~~ Made by <a href="https://github.com/snollygolly/sourceio-automation" style="color: #ff2" target="_blank" rel="noopener noreferrer">snollygolly</a>, improved && updated by <a href="https://github.com/NoNameLmao/s0urceio-hax"style="color: #ff2" target="_blank" rel="noopener noreferrer">emberglaze</a>'+
+                    's0urceio-hax v0.10.1-49 ~~ Made by <a href="https://github.com/snollygolly/sourceio-automation" style="color: #ff2" target="_blank" rel="noopener noreferrer">snollygolly</a>, improved && updated by <a href="https://github.com/NoNameLmao/s0urceio-hax"style="color: #ff2" target="_blank" rel="noopener noreferrer">emberglaze</a>'+
                 '</div>'+
         '</div>'
     );
@@ -504,6 +503,7 @@
         new TxtRotate($("#login-page > div.login-window > div:nth-child(2) > span")[0]);
         $("#login-page > div.login-window > div:nth-child(4)")[0].outerHTML = '';
         $("#login-page > div.login-window > div:nth-child(6)")[0].outerHTML = '';
+        $(".login-window").attr('background', '')
         enableRightClick();
     }
     $("#window-log > div.window-content > div > div")[0].innerHTML = "System started. s0urceio-hax's GUI will show in 5 seconds to make sure the page finished loading.";
