@@ -412,7 +412,7 @@ const gui = {
     }
 };
 // access all userscript vars from the window object in console
-unsafeWindow.hax = { config, app, vars, loops, gui }
+window.hax = { config, app, vars, loops, gui }
 
 function checkFirewallsUpgrades(FW, index) {
     if (index == 3) return true;
