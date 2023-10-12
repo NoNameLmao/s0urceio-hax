@@ -531,7 +531,9 @@ window.onload = () => {
     }
 }
     `;
-    GM_addStyle(css);
+    const styleTag = document.createElement('style');
+	styleTag.textContent = css;
+	document.head.appendChild(styleTag);
     new TxtRotate($("#login-page > div.login-window > div:nth-child(2) > span")[0]);
     setCDMTitle('cdm (idle)');
     $("#login-page > div.login-window > div:nth-child(4)").hide();
