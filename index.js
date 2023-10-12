@@ -461,7 +461,7 @@ $("#login-page > div > div.login-element-description")[0].outerHTML.replace('<di
     '</div>'+
     '\n\t\t\t'+
     '<div style="opacity: 0.3; color: #ff2">'+ // version
-        's0urceio-hax v2023.08.21-91~~ Made by <a href="https://github.com/snollygolly/sourceio-automation" style="color: #ff2" target="_blank" rel="noopener noreferrer">snollygolly</a>, improved && updated by <a href="https://github.com/NoNameLmao/s0urceio-hax"style="color: #ff2" target="_blank" rel="noopener noreferrer">emberglaze</a>'+
+        's0urceio-hax v2023.10.12-106~~ Made by <a href="https://github.com/snollygolly/sourceio-automation" style="color: #ff2" target="_blank" rel="noopener noreferrer">snollygolly</a>, improved && updated by <a href="https://github.com/NoNameLmao/s0urceio-hax"style="color: #ff2" target="_blank" rel="noopener noreferrer">emberglaze</a>'+
     '</div>'
 );
 $("#login-page > div.login-window > div:nth-child(2)")[0].outerHTML = (
