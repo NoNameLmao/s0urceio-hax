@@ -19,7 +19,7 @@ const config = {
     maxUpgradeCost: .3,              // will only be allowed to spend a percentage of your balance on upgrading miners
     cdnShowProgressPercentage: true, // show hacking progress in percentage in CDN window title
     infoInPageTitle: true,           // TODO: show some information by changing the page's title
-    enableLogging: false,            // Output logs in Devtools console (recommended to be "false" unless debugging, causes huge lag over time if console isn't cleared regularly)
+    enableLogging: true,            // Output logs in Devtools console (recommended to be "false" unless debugging, causes huge lag over time if console isn't cleared regularly)
     gui: {
         enabled: true,  // if you want the bot's own custom window or not (you can always close it in game and reopen it by typing "" in f12 console)
         width: "320px", // window width  in pixels
